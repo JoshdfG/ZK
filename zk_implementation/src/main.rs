@@ -90,7 +90,6 @@ impl<P: PrimeField> Mul for Polynomials<P> {
             .for_each(|(idx, val)| result[idx] += val);
 
         Polynomials::new(result)
-        // Polynomials { value: result }
     }
 }
 
@@ -248,7 +247,7 @@ mod tests {
     #[test]
     fn test_scalar_mul() {
         // Test scalar multiplication with a simple polynomial
-        let poly = Polynomials::new(vec![Fq::from(1), Fq::from(1)]); // x + 1
+        let poly = Polynomials::new(vec![Fq::from(1), Fq::from(1)]);
         let scalar = Fq::from(2);
         let result = poly.scalar_mul(&scalar);
         println!("Scalar mul result: {:?}", result.value);
