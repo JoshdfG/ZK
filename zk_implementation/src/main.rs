@@ -53,7 +53,7 @@ impl<P: PrimeField> Polynomials<P> {
 
 impl<P: PrimeField> Sum for Polynomials<P> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Polynomials::new(vec![P::one()]), |result, poly| {
+        iter.fold(Polynomials::new(vec![P::zero()]), |result, poly| {
             &result + &poly
         })
     }
