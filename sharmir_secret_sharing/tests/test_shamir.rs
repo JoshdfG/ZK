@@ -24,7 +24,7 @@ fn test_recover_wrong_secret_fails() {
     let threshold = 3;
     let number_of_shares = 9;
 
-    let shares = shares(secret, threshold, number_of_shares);
+    let shares = shares( secret, threshold, number_of_shares);
 
     let recovered_secret = recover_secret(shares);
 

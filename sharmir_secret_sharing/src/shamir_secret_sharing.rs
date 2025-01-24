@@ -4,7 +4,6 @@ use crate::utility::DensedUnivariatePolynomial;
 
 use ark_ff::PrimeField;
 
-
 // secret: this is the values to be shared from a finite field
 // Minimum number of shares required to reconstruct the secret.
 // number_shares: Total number of shares to generate.
@@ -16,11 +15,11 @@ pub fn shares<F: PrimeField>(secret: F, threshold: u64, number_shares: u64) -> V
         .collect();
 
     let polynomial = DensedUnivariatePolynomial::new(y_values);
-
+    // y is the result of evaluating the polynomial at x-coordinates
     (1..=number_shares)
         .map(|i| {
-            let x = F::from(i);
-            (x, polynomial.evaluate(x))
+            let x_coordinates = F::from(i);
+            (x_coordinates, polynomial.evaluate(x_coordinates))
         })
         .collect()
 }
