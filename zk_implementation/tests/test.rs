@@ -35,11 +35,13 @@ fn test_degree() {
 
 #[test]
 fn test_eval() {
+    // p(x) = 1 + 2x + 3x^2
+    // p(3) = 1 + 6 + 27 = 34
     let p = Polynomials {
         value: vec![Fq::from(1), Fq::from(2), Fq::from(3)],
     };
-    p.evaluate(Fq::from(1));
-    assert_eq!(p.evaluate(Fq::from(1)), Fq::from(6));
+    let result = p.evaluate(Fq::from(3));
+    assert_eq!(result, Fq::from(34));
 }
 
 #[test]
@@ -112,3 +114,12 @@ fn test_scalar_mul() {
     let result = poly.scalar_mul(&scalar);
     println!("Scalar mul result: {:?}", result.value);
 }
+
+// base fee is the minimum fee to be paid for your transaction to be included in a block
+// and this can be set per block depending on how congested the eth network is
+// this increases the network capacity from 12.5M to 25M
+// when the network is at more than 50% utilization the base fee is increased and if it's lower than 50% the base fee is reduced
+// the networks aims at achieving equilibrium by adjusting fees accordingly to the network utilization
+// Miners fee - Priority fee {this is used by transaction that take advantage of quick confirmation such as arbitrage txns}
+
+// In Pos validators are required to stake

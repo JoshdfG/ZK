@@ -41,6 +41,7 @@ impl<P: PrimeField> Polynomials<P> {
 
         //denominator
         // Changed to use inverse() instead of the normal division
+        // let denominator: P = P::one() / numerator.evaluate(*x);
         let denominator: P = numerator.evaluate(*x).inverse().unwrap();
         numerator.scalar_mul(&denominator)
     }
