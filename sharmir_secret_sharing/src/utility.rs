@@ -1,96 +1,107 @@
+use ::std::iter::Sum;
+use ::std::ops::Mul;
 use ark_ff::PrimeField;
-
-#[derive(Debug)]
-pub struct DensedUnivariatePolynomial<F: PrimeField> {
-    pub coefficients: Vec<F>,
+use std::iter::Product;
+use std::ops::Add;
+#[derive(Clone, Debug, PartialEq)]
+pub struct DenseUnivariatePolynomial<P: PrimeField> {
+    pub coefficients: Vec<P>,
 }
 
-impl<F: PrimeField> DensedUnivariatePolynomial<F> {
-    pub fn new(coeffs: Vec<F>) -> Self {
-        Self {
-            coefficients: coeffs,
-        }
+impl<P: PrimeField> DenseUnivariatePolynomial<P> {
+    pub fn new(_value: Vec<P>) -> Self {
+        DenseUnivariatePolynomial { coefficients: _value }
     }
-
-    pub fn degree(&self) -> u32 {
-        self.coefficients.len() as u32 - 1
-    }
-
-    pub fn evaluate(&self, value: F) -> F {
+    pub fn evaluate(&self, x: P) -> P {
         self.coefficients
             .iter()
             .enumerate()
-            .map(|(index, coeff)| *coeff * value.pow([index as u64]))
+            .map(|(index, coef)| *coef * x.pow([index as u64]))
             .sum()
     }
 
-    pub fn lagrange_interpolate(x_values: Vec<F>, y_values: Vec<F>) -> Self {
-        let coeffs = x_values
-            .iter()
-            .enumerate()
-            .map(|(index, &x_value)| lagrange_basis(y_values[index], x_value, x_values.clone()))
-            .fold(vec![F::zero()], add_polynomials);
+    pub fn degree(&self) -> usize {
+        self.coefficients.len() - 1
+    }
 
-        DensedUnivariatePolynomial::new(coeffs)
+    pub fn interpolate(xs: Vec<P>, ys: Vec<P>) -> DenseUnivariatePolynomial<P> {
+        xs.iter()
+            .zip(ys.iter())
+            .map(|(x, y)| Self::basis(x, &xs).scalar_mul(y))
+            .sum()
+    }
+
+    pub fn basis(x: &P, interpolating_set: &[P]) -> Self {
+        let numerator: DenseUnivariatePolynomial<P> = interpolating_set
+            .iter()
+            .filter(|val| *val != x)
+            .map(|x_n| DenseUnivariatePolynomial::new(vec![-*x_n, P::one()]))
+            .product();
+        let denominator: P = numerator.evaluate(*x).inverse().unwrap();
+        numerator.scalar_mul(&denominator)
+    }
+
+    pub fn scalar_mul(&self, y: &P) -> Self {
+        DenseUnivariatePolynomial::new(self.coefficients.iter().map(|coeff| *coeff * y).collect())
     }
 }
 
-pub fn lagrange_basis<F: PrimeField>(
-    y_point: F,
-    focus_x_point: F,
-    interpolating_set: Vec<F>,
-) -> Vec<F> {
-    let numerator = interpolating_set
-        .iter()
-        .filter(|&x| *x != focus_x_point)
-        .fold(vec![F::one()], |acc, &x| {
-            multiply_polynomials(acc, vec![-x, F::one()])
-        });
-
-    let univariate_poly = DensedUnivariatePolynomial::new(numerator.clone());
-    let denominator = univariate_poly.evaluate(focus_x_point);
-
-    scalar_mul(y_point / denominator, numerator)
-}
-
-pub fn scalar_mul<F: PrimeField>(scalar: F, polynomial: Vec<F>) -> Vec<F> {
-    polynomial.into_iter().map(|coeff| scalar * coeff).collect()
-}
-
-pub fn multiply_polynomials<F: PrimeField>(left: Vec<F>, right: Vec<F>) -> Vec<F> {
-    let mut polynomial_product = vec![F::zero(); left.len() + right.len() - 1];
-
-    left.iter()
-        .enumerate()
-        .flat_map(|(left_index, &left_coeff)| {
-            right
-                .iter()
-                .enumerate()
-                .map(move |(right_index, &right_coeff)| {
-                    (left_index + right_index, left_coeff * right_coeff)
-                })
+impl<P: PrimeField> Sum for DenseUnivariatePolynomial<P> {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(DenseUnivariatePolynomial::new(vec![P::zero()]), |result, poly| {
+            &result + &poly
         })
-        .for_each(|(index, val)| polynomial_product[index] += val);
-
-    polynomial_product
+    }
 }
 
-pub fn add_polynomials<F: PrimeField>(left: Vec<F>, right: Vec<F>) -> Vec<F> {
-    let (larger, smaller) = if left.len() > right.len() {
-        (left, right)
-    } else {
-        (right, left)
-    };
+impl<P: PrimeField> Mul for DenseUnivariatePolynomial<P> {
+    type Output = DenseUnivariatePolynomial<P>;
+    fn mul(self, rhs: Self) -> DenseUnivariatePolynomial<P> {
+        let new_deg = self.degree() + rhs.degree();
+        let mut result = vec![P::zero(); new_deg + 1];
 
-    larger
-        .into_iter()
-        .enumerate()
-        .map(|(exp, coeff)| {
-            if exp < smaller.len() {
-                coeff + smaller[exp]
-            } else {
-                coeff
-            }
+        self.coefficients
+            .iter()
+            .enumerate()
+            .flat_map(|(i, &a)| {
+                rhs.coefficients
+                    .iter()
+                    .enumerate()
+                    .map(move |(j, &b)| (i + j, a * b))
+            })
+            .for_each(|(idx, val)| result[idx] += val);
+
+        DenseUnivariatePolynomial::new(result)
+    }
+}
+
+impl<P: PrimeField> Product for DenseUnivariatePolynomial<P> {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(DenseUnivariatePolynomial::new(vec![P::one()]), |result, poly| {
+            result * poly
         })
-        .collect()
+    }
+}
+
+impl<P: PrimeField> Add for &DenseUnivariatePolynomial<P> {
+    type Output = DenseUnivariatePolynomial<P>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        // this basically checks the index of the two polynomials and stops when its longer than each other
+        // and brings in the rest as single values they lack mates :(
+        let (mut bigger, &smaller) = if self.degree() < rhs.degree() {
+            (rhs.clone(), &self)
+        } else {
+            (self.clone(), &rhs)
+        };
+
+        bigger
+            .coefficients
+            .iter_mut()
+            .zip(smaller.coefficients.iter())
+            .map(|(b_coef, s_coef)| *b_coef += s_coef)
+            .for_each(drop);
+
+        DenseUnivariatePolynomial::new(bigger.coefficients)
+    }
 }
