@@ -9,8 +9,9 @@ use ark_ff::PrimeField;
 // number_shares: Total number of shares to generate.
 // this outputs a value of (x,y) pair x is the share identifier / index of the polynomials evaluated at x.
 pub fn shares<F: PrimeField>(secret: F, threshold: u64, number_shares: u64) -> Vec<(F, F)> {
-let mut rng = rand::thread_rng();
- let y_values = iter::once(secret).chain(iter::from_fn(|| Some(F::rand(&mut rng)))).take(threshold as usize -1).collect();
+let mut rnd = rand::thread_rng();
+ let y_values = iter::once(secret).chain(iter::from_fn(|| Some(F::rand(&mut rnd)))).take(threshold as usize - 1).collect();
+
     let polynomial = DenseUnivariatePolynomial::new(y_values);
     // y is the result of evaluating the polynomial at x-coordinates
     (1..=number_shares)
@@ -20,7 +21,6 @@ let mut rng = rand::thread_rng();
         })
         .collect()
 }
-
 pub fn recover_secret<F: PrimeField>(shares: Vec<(F, F)>) -> F {
     let (x_values, y_values) = shares.into_iter().unzip();
 
