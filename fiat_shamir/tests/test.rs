@@ -1,8 +1,11 @@
-use ark_bn254::{Fr};
-use ark_ff::{BigInteger, PrimeField};
-use fiat_shamir::transcript::Transcript;
 use fiat_shamir::{prover};
-use sha3::{Digest, Keccak256};
+
+#[cfg(test)]
+mod hash_tests {
+    use ark_bn254::{Fr};
+    use ark_ff::{BigInteger, PrimeField};
+    use fiat_shamir::transcript::Transcript;
+    use sha3::{Digest, Keccak256};
 
 #[test]
 fn test_hash() {
@@ -16,7 +19,7 @@ fn test_hash() {
 
     dbg!(challenge);
     dbg!(challenge1);
-}
+}}
 
 #[cfg(test)]
 mod tests {
