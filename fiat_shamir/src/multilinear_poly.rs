@@ -32,7 +32,7 @@ impl<F: PrimeField> MultilinearPolynomial<F> {
         evaluating_variable: usize,
         r_value: F,
     ) -> Vec<F> {
-        let polynomial_size = polynomial.len() ;
+        let polynomial_size = polynomial.len();
         let divided_size = polynomial_size / 2;
         let poly_result = Vec::with_capacity(divided_size);
 

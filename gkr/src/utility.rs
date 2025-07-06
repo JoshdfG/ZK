@@ -2,7 +2,7 @@ pub mod utils {
     use ark_ff::{BigInteger, PrimeField};
 
     pub fn split_polynomial_and_sum_each<F: PrimeField>(
-        polynomial_evaluated_values: &Vec<F>,
+        polynomial_evaluated_values: &[F],
     ) -> Vec<F> {
         let mut univariate_polynomial: Vec<F> = Vec::with_capacity(2);
 

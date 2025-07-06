@@ -4,11 +4,11 @@ use ark_ff::{BigInteger, PrimeField};
 // then the values from the boolean hypercube evaluation is used as the polynomial
 // which will be evaluated at a given variable values using partial evaluation
 #[derive(Debug, Clone, PartialEq)]
-pub struct MultilinearPolynomial<F: PrimeField> {
+pub struct MultilinearPolynomialEV<F: PrimeField> {
     pub evaluated_values: Vec<F>,
 }
 
-impl<F: PrimeField> MultilinearPolynomial<F> {
+impl<F: PrimeField> MultilinearPolynomialEV<F> {
     pub fn new(evaluated_values: &[F]) -> Self {
         Self {
             evaluated_values: evaluated_values.to_vec(),
@@ -51,7 +51,7 @@ impl<F: PrimeField> MultilinearPolynomial<F> {
             .map(|value| *value * scalar)
             .collect();
 
-        MultilinearPolynomial::new(&scaled_values)
+        MultilinearPolynomialEV::new(&scaled_values)
     }
 
     // This function will receive a polynomial in it's evaluated form
@@ -100,13 +100,13 @@ impl<F: PrimeField> MultilinearPolynomial<F> {
             }
         }
 
-        MultilinearPolynomial::new(&result_polynomial)
+        MultilinearPolynomialEV::new(&result_polynomial)
     }
 
     pub fn polynomial_tensor_add(
-        w_b: &MultilinearPolynomial<F>,
-        w_c: &MultilinearPolynomial<F>,
-    ) -> MultilinearPolynomial<F> {
+        w_b: &MultilinearPolynomialEV<F>,
+        w_c: &MultilinearPolynomialEV<F>,
+    ) -> MultilinearPolynomialEV<F> {
         assert!(w_b.evaluated_values.len() == w_c.evaluated_values.len());
 
         let mut add_result = Vec::new();
@@ -117,13 +117,13 @@ impl<F: PrimeField> MultilinearPolynomial<F> {
             }
         }
 
-        MultilinearPolynomial::new(&add_result)
+        MultilinearPolynomialEV::new(&add_result)
     }
 
     pub fn polynomial_tensor_mul(
-        w_b: &MultilinearPolynomial<F>,
-        w_c: &MultilinearPolynomial<F>,
-    ) -> MultilinearPolynomial<F> {
+        w_b: &MultilinearPolynomialEV<F>,
+        w_c: &MultilinearPolynomialEV<F>,
+    ) -> MultilinearPolynomialEV<F> {
         assert!(
             w_b.evaluated_values.len() == w_c.evaluated_values.len(),
             "different polynomial length"
@@ -137,12 +137,12 @@ impl<F: PrimeField> MultilinearPolynomial<F> {
             }
         }
 
-        MultilinearPolynomial::new(&mul_result)
+        MultilinearPolynomialEV::new(&mul_result)
     }
 
     pub fn add_polynomials(
-        poly1: &MultilinearPolynomial<F>,
-        poly2: &MultilinearPolynomial<F>,
+        poly1: &MultilinearPolynomialEV<F>,
+        poly2: &MultilinearPolynomialEV<F>,
     ) -> Self {
         assert_eq!(
             poly1.evaluated_values.len(),
@@ -157,6 +157,6 @@ impl<F: PrimeField> MultilinearPolynomial<F> {
             .map(|(a, b)| *a + *b)
             .collect();
 
-        MultilinearPolynomial::new(&sum_values)
+        MultilinearPolynomialEV::new(&sum_values)
     }
 }

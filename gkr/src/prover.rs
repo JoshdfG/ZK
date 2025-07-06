@@ -1,6 +1,7 @@
+use crate::evaluation::MultilinearPolynomialEV;
 use crate::{
-    multilinear_poly::MultilinearPolynomial, transcript::Transcript,
-    utility::utils::field_element_to_bytes, utility::utils::split_polynomial_and_sum_each,
+    gkr_sumcheck_dependencies::transcript::Transcript, utility::utils::field_element_to_bytes,
+    utility::utils::split_polynomial_and_sum_each,
 };
 use ark_ff::PrimeField;
 use sha3::{Digest, Keccak256};
@@ -8,20 +9,20 @@ use sha3::{Digest, Keccak256};
 #[derive(Debug, Clone)]
 pub struct ProofContainer<F: PrimeField> {
     pub claimed_sum: F,
-    pub evaluated_uni_polynomials: Vec<MultilinearPolynomial<F>>,
-    pub initial_polynomial: MultilinearPolynomial<F>,
+    pub evaluated_uni_polynomials: Vec<MultilinearPolynomialEV<F>>,
+    pub initial_polynomial: MultilinearPolynomialEV<F>,
     pub transcript: Transcript,
 }
 
 pub struct Prove<F: PrimeField> {
-    pub initial_polynomial: MultilinearPolynomial<F>,
+    pub initial_polynomial: MultilinearPolynomialEV<F>,
     pub initial_claimed_sum: F,
-    pub evaluated_uni_polynomials: Vec<MultilinearPolynomial<F>>,
+    pub evaluated_uni_polynomials: Vec<MultilinearPolynomialEV<F>>,
 }
 
 impl<F: PrimeField> ProofContainer<F> {
     pub fn new(_boolean_hypercube_evaluations: Vec<F>) -> Self {
-        let polynomial = MultilinearPolynomial::new(_boolean_hypercube_evaluations.clone());
+        let polynomial = MultilinearPolynomialEV::new(&_boolean_hypercube_evaluations.clone());
         let transcript = Transcript {
             hasher: Keccak256::new(),
         };
@@ -41,11 +42,11 @@ impl<F: PrimeField> ProofContainer<F> {
         self.transcript
             .absorb(&field_element_to_bytes(self.claimed_sum));
 
-        let mut current_polynomial = self.initial_polynomial.evaluations.clone();
+        let mut current_polynomial = self.initial_polynomial.evaluated_values.clone();
 
-        for _i in 0..self.initial_polynomial.get_number_of_var() {
+        for _i in 0..self.initial_polynomial.number_of_variables() {
             let univariate_lr_values = split_polynomial_and_sum_each(&current_polynomial);
-            let univariate_polynomials = MultilinearPolynomial::new(univariate_lr_values);
+            let univariate_polynomials = MultilinearPolynomialEV::new(&univariate_lr_values);
             let univariate_to_bytes = univariate_polynomials.convert_to_bytes();
             self.evaluated_uni_polynomials.push(univariate_polynomials);
             self.transcript.absorb(&univariate_to_bytes);
@@ -53,11 +54,9 @@ impl<F: PrimeField> ProofContainer<F> {
             let random_challenge = self.transcript.random_challenge_as_field_element();
             random_challenges.push(random_challenge);
 
-            current_polynomial = self.initial_polynomial.partial_evaluation(
-                &current_polynomial,
-                0,
-                random_challenge,
-            );
+            current_polynomial =
+                MultilinearPolynomialEV::partial_evaluate(&current_polynomial, 0, random_challenge)
+                    .evaluated_values;
         }
         Prove {
             initial_polynomial: self.initial_polynomial.clone(),

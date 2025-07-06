@@ -1,9 +1,9 @@
-use crate::prover::{ Prove};
+use crate::prover::Prove;
 use crate::transcript::Transcript;
-use crate::utility::{utils::field_element_to_bytes};
+use crate::utility::utils::field_element_to_bytes;
 use ark_ff::PrimeField;
-use std::marker::PhantomData;
 use sha3::{Digest, Keccak256};
+use std::marker::PhantomData;
 
 pub struct Verifier<F: PrimeField> {
     pub transcript: Transcript,
@@ -31,7 +31,7 @@ impl<F: PrimeField> Verifier<F> {
         let mut challenges = Vec::with_capacity(proof.evaluated_uni_polynomials.len());
         for i in 0..proof.evaluated_uni_polynomials.len() {
             let evaluation_at_zero = vec![F::zero()];
-            let evaluation_at_one =vec![F::one()] ;
+            let evaluation_at_one = vec![F::one()];
 
             if proof.evaluated_uni_polynomials[i].evaluate(evaluation_at_zero)
                 + proof.evaluated_uni_polynomials[i].evaluate(evaluation_at_one)
